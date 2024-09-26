@@ -20,20 +20,26 @@ module FerrumPdf
       @browser ||= Ferrum::Browser.new(options)
     end
 
-    def render_pdf(html: nil, url: nil, host: nil, protocol: nil, pdf_options: {})
-      render(host: host, protocol: protocol, html: html, url: url) do |page|
+    def render_pdf(html: nil, url: nil, host: nil, protocol: nil, auth_options: {}, pdf_options: {})
+      render(host: host, protocol: protocol, html: html, url: url, **auth_options) do |page|
         page.pdf(**pdf_options.with_defaults(encoding: :binary))
       end
     end
 
-    def render_screenshot(html: nil, url: nil, host: nil, protocol: nil, screenshot_options: {})
-      render(host: host, protocol: protocol, html: html, url: url) do |page|
+    def render_screenshot(html: nil, url: nil, host: nil, protocol: nil, auth_options: {}, screenshot_options: {})
+      render(host: host, protocol: protocol, html: html, url: url, **auth_options) do |page|
         page.screenshot(**screenshot_options.with_defaults(encoding: :binary, full: true))
       end
     end
 
     def render(host:, protocol:, html: nil, url: nil)
       browser.create_page do |page|
+        if auth_options.present? && auth_options.fetch(:auth_type) == :basic
+          encoded_credentials = Base64.encode64("#{auth_options.fetch(:username)}:#{auth_options.fetch(:password)}")
+
+          page.headers.add({ "Authorization" => "Basic #{encoded_credentials.chomp}" }, permanent: false)
+        end
+
         if html
           page.content = FerrumPdf::HTMLPreprocessor.process(html, host, protocol)
           page.network.wait_for_idle
