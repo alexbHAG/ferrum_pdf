@@ -32,7 +32,7 @@ module FerrumPdf
       end
     end
 
-    def render(host:, protocol:, html: nil, url: nil)
+    def render(host:, protocol:, html: nil, url: nil, **auth_options)
       browser.create_page do |page|
         if auth_options.present? && auth_options.fetch(:auth_type) == :basic
           encoded_credentials = Base64.encode64("#{auth_options.fetch(:username)}:#{auth_options.fetch(:password)}")
@@ -53,3 +53,4 @@ module FerrumPdf
     end
   end
 end
+
